@@ -1,13 +1,14 @@
-public class Zipcode {
-    private int zip;
-    private String barcode;
+public class Zipcode
+{
 
-    // Encoding weights and bars for each digit from 0 to 9
-    private static final int[] WEIGHTS = {7, 4, 2, 1, 0};
-    private static final String[] DIGIT_TO_BAR = {
-        "||:::", // 0
-        ":::||", // 1
-        "::|:|", // 2
+private int zipCode;
+private String barCode;
+
+// Arrays that represent bar encoded patterns for each digit from 0 to 9
+private static final String[] patterns = {
+        "||:::",    // 0
+        ":::||",   // 1
+        "::|:|",  // 2
         "::||:", // 3
         ":|::|", // 4
         ":|:|:", // 5
@@ -15,91 +16,95 @@ public class Zipcode {
         "|:::|", // 7
         "|::|:", // 8
         "|:|::"  // 9
-    };
+};
 
-    // Constructor for encoding ZIP code to barcode
-    public Zipcode(int zip) {
-        this.zip = zip;
-        this.barcode = generateBarcode();
-    }
+// Constructor for zipcode to barcode conversion
+public Zipcode(int zipCode)
+{
+    this.zipCode = zipCode;
+    this.barCode = convertZtoB(zipCode);
+}
 
-    // Constructor for decoding barcode to ZIP code
-    public Zipcode(String barcode) {
-        this.barcode = barcode;
-        this.zip = decodeBarcode();
-    }
+ // Constructor for barcode to zipcode conversion
+ public Zipcode(String barCode)
+ {
+    this.barCode = barCode;
+    this.zipCode = Integer.valueOf((convertBtoZ(barCode)));
+ }
 
-    // Method to generate the barcode from ZIP code
-    private String generateBarcode() {
-        StringBuilder barcodeBuilder = new StringBuilder("|"); // Start frame bar
-        int sum = 0;
+    // Convert ZIP code to bar code
+    public String convertZtoB(int zipCode)
+    {
+        // Start with left frame bar
+        StringBuilder barCodeS = new StringBuilder("|");
 
-        // Process each digit of the ZIP code
-        int zipTemp = zip;
-        for (int i = 0; i < 5; i++) {
-            int digit = zipTemp % 10;
-            zipTemp /= 10;
-            sum += digit;
-            barcodeBuilder.insert(1, DIGIT_TO_BAR[digit]); // Insert at the beginning after frame bar
+        // Convert the ZIP code to a 5-digit string 
+        String zipCodeS = Integer.toString(zipCode); //convert zipcode to a string
+        while(zipCodeS.length() < 5)
+        {
+            zipCodeS += "0" + zipCodeS;
         }
 
-        // Calculate the check digit to make the sum a multiple of 10
-        int checkDigit = (10 - (sum % 10)) % 10;
-        barcodeBuilder.append(DIGIT_TO_BAR[checkDigit]); // Add check digit encoding
-        barcodeBuilder.append("|"); // End frame bar
-
-        return barcodeBuilder.toString();
-    }
-
-    // Method to decode the barcode back into a ZIP code
-    private int decodeBarcode() {
-        if (barcode.length() != 32 || barcode.charAt(0) != '|' || barcode.charAt(barcode.length() - 1) != '|') {
-            throw new IllegalArgumentException("Invalid barcode format");
-        }
-
+        // Calculate the check digit
         int sum = 0;
-        int zipResult = 0;
+        for(int i = 0; i <zipCodeS.length(); i++)
+        {
+            sum += zipCodeS.charAt(i) - '0'; // Subtract '0' to get the numeric value
+        }
+            int checkDigit = (10 - (sum % 10)) % 10;
 
-        // Process each set of 5 bars (excluding frame bars) and decode each digit
-        for (int i = 1; i <= 25; i += 5) {
-            String digitBars = barcode.substring(i, i + 5);
-            int digit = getDigitFromBars(digitBars);
-            if (digit == -1) {
-                throw new IllegalArgumentException("Invalid bar encoding");
+            // Append the patterns for each digit in the ZIP code
+            for(int i = 0; i < zipCodeS.length(); i++)
+            {
+                int digit = zipCodeS.charAt(i) - '0'; //convert char to its integer value
+                barCodeS.append(patterns[digit]); //append the corresponding bar pattern
             }
 
-            if (i <= 20) {
-                zipResult = zipResult * 10 + digit;
-                sum += digit;
-            } else {
-                // Check digit
-                int checkDigit = digit;
-                if ((sum + checkDigit) % 10 != 0) {
-                    throw new IllegalArgumentException("Checksum error in barcode");
+            // Append the pattern for the check digit
+            barCodeS.append(patterns[checkDigit]);
+
+            // End with the right frame bar
+            barCodeS.append("|");
+
+            return barCodeS.toString();
+    }
+
+    // Convert barcode to ZIP code
+    public String convertBtoZ(String barCode)
+    {
+        StringBuilder zipCodeS = new StringBuilder();
+
+        for(int i = 1; i <barCode.length() - 6; i += 5)
+        {
+            String barSeg = barCode.substring(i, i + 5);
+            int digit = -1;
+
+            // Match the bar segment with the pattern for each digit
+            for(int j = 0; j < patterns.length; j++)
+            {
+                if(patterns[j].equals(barSeg))
+                {
+                    digit = j;
+                    break;
                 }
             }
-        }
-
-        return zipResult;
-    }
-
-    // Helper method to get a digit from the 5-bar encoding
-    private int getDigitFromBars(String bars) {
-        for (int i = 0; i < DIGIT_TO_BAR.length; i++) {
-            if (DIGIT_TO_BAR[i].equals(bars)) {
-                return i;
+            zipCodeS.append(digit); //append the matched digit to the result
+            
             }
+            return zipCodeS.toString(); //return the zipcode as a String
         }
-        return -1; // Invalid encoding
-    }
 
-    // Method to return the generated barcode
-    public String getBarcode() {
-        return barcode;
-    }
+    // Method to get the barcode
+     public String getBarcode()
+     {
+        return barCode;
+     }
 
-    // Method to return the decoded ZIP code
-    public int getZIPcode() {
-        return zip;
-    }
+     // Method to get the zipcode
+     public int getZIPcode()
+     {
+        return zipCode;
+     }
+
 }
+
